@@ -5,16 +5,62 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import javax.swing.event.MouseInputAdapter;
 
 class DebuggingLens extends JComponent implements ItemListener {
 
-    Point point;
+    Point currentPoint;
+    Point oldPoint;
+    Container contentPane;
+    ArrayList<Component> componentsInRegion;
+    int width = 100;
+    int height = 100;
 
     public DebuggingLens(AbstractButton aButton, Container contentPane) {
         CheckBoxListener listener = new CheckBoxListener(aButton,this, contentPane);
+        this.contentPane =  contentPane;
         addMouseListener(listener);
         addMouseMotionListener(listener);
+        componentsInRegion = new ArrayList<>();
+    }
+
+    private void updateComponentsInRegion(){
+        double oldX = oldPoint.getX();
+        double oldY = oldPoint.getY();
+        double newX = currentPoint.getX();
+        double newY = currentPoint.getY();
+        int smallerX, biggerX, smallerY, biggerY;
+        if(oldX > newX){
+            smallerX = (int) newX;
+            biggerX = (int) oldX;
+        }
+        else{
+            smallerX = (int) oldX;
+            biggerX = (int) newX;
+        }
+        if(oldY > newY){
+            smallerY = (int) newY;
+            biggerY = (int) oldY;
+        }
+        else{
+            smallerY = (int) oldY;
+            biggerY = (int) newY;
+        }
+
+        for(int i = smallerX; i < biggerX; i++){
+            for(int j = smallerY; j < biggerY + height; j++){
+                Point p = new Point(i, j);
+                Point containerPoint = SwingUtilities.convertPoint(this, p, contentPane);
+                Component component = SwingUtilities.getDeepestComponentAt(contentPane, containerPoint.x, containerPoint.y);
+                if(componentsInRegion.contains(component)){
+                    componentsInRegion.remove(component);
+                }
+            }
+        }
+
+
+
     }
 
     // react to change button clicks.
@@ -23,14 +69,25 @@ class DebuggingLens extends JComponent implements ItemListener {
     }
 
     protected void paintComponent(Graphics g) {
-        if (point != null) {
+
+        updateComponentsInRegion();
+
+        for (Component c : componentsInRegion){
+            if(!(c instanceof JPanel)){
+                g.setColor(Color.red);
+                g.drawRect(c.getX(), c.getY(), c.getWidth(), c.getHeight());
+            }
+        }
+
+        if (currentPoint != null) {
             g.setColor(Color.black);
-            g.drawRect(point.x, point.y, 100, 100);
+            g.drawRect(currentPoint.x, currentPoint.y, width, height);
         }
     }
 
-    public void setPoint(Point p) {
-        point = p;
+    public void setCurrentPoint(Point p) {
+        oldPoint = currentPoint;
+        currentPoint = p;
     }
 }
 
@@ -100,7 +157,7 @@ class CheckBoxListener extends MouseInputAdapter {
         }
         // update the glass pane if requested.
         if (repaint) {
-            glassPane.setPoint(glassPanePoint);
+            glassPane.setCurrentPoint(glassPanePoint);
             glassPane.repaint();
         }
     }
