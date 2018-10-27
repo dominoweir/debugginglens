@@ -1,5 +1,3 @@
-package com.zetcode;
-
 import javax.swing.GroupLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
