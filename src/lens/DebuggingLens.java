@@ -24,7 +24,7 @@ class DebuggingLens extends JComponent implements ItemListener {
 
     // Control Panel stuff
     private JFrame lensControlPanel;
-    private JCheckBox borderLocationsFilt, borderWidthsFilt, componentSizesFilt, componentClassesFilt, fontMetricsFilt, layoutManagerFilt;
+    private JCheckBox borderLocationsFilt, borderWidthsFilt, componentSizesFilt, componentLocationsFilt, componentClassesFilt, fontMetricsFilt, layoutManagerFilt;
     private JPanel filtersPnl;
     private TitledBorder filtersBorder;
 
@@ -43,9 +43,6 @@ class DebuggingLens extends JComponent implements ItemListener {
         Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
         currentPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);;
         oldPoint = currentPoint;
-
-        // init list of components
-        updateComponentsInRegion();
 
         // control panel stuff
         initCtrlPnl();
@@ -101,9 +98,12 @@ class DebuggingLens extends JComponent implements ItemListener {
             borderLocationsFilt = new JCheckBox("Border Locations");
             borderWidthsFilt = new JCheckBox("Border Widths");
             componentSizesFilt = new JCheckBox("Component Sizes");
+            componentLocationsFilt = new JCheckBox("Component Locations");
             componentClassesFilt = new JCheckBox("Component Classes");
-            fontMetricsFilt = new JCheckBox("Component Sizes");
-            layoutManagerFilt = new JCheckBox("Component Classes");
+            fontMetricsFilt = new JCheckBox("Font Details");
+            layoutManagerFilt = new JCheckBox("Layout Managers");
+
+            borderLocationsFilt.setSelected(true);
 
         lensControlPanel.pack();
         lensControlPanel.setVisible(true);
@@ -117,6 +117,7 @@ class DebuggingLens extends JComponent implements ItemListener {
             filtersPnl.add(borderLocationsFilt);
             filtersPnl.add(borderWidthsFilt);
             filtersPnl.add(componentSizesFilt);
+            filtersPnl.add(componentLocationsFilt);
             filtersPnl.add(componentClassesFilt);
             filtersPnl.add(fontMetricsFilt);
             filtersPnl.add(layoutManagerFilt);
@@ -134,10 +135,72 @@ class DebuggingLens extends JComponent implements ItemListener {
 
         updateComponentsInRegion();
 
-        for (Component c : componentsInRegion){
-            if(!(c instanceof JPanel)){
+        for(Component c : componentsInRegion) {
+
+            // this is important for updating the next annotation location
+            FontMetrics fm = c.getFontMetrics(c.getFont());
+            int fontHeight = fm.getHeight();
+
+            // these will be updated as annotations are added to the component
+            int annotationX = c.getX();
+            int annotationY = c.getY() + c.getHeight() + fontHeight;
+
+            if(borderLocationsFilt.isSelected()){
                 g.setColor(Color.red);
                 g.drawRect(c.getX(), c.getY(), c.getWidth(), c.getHeight());
+            }
+
+            if(borderWidthsFilt.isSelected()){
+
+            }
+
+            if(componentSizesFilt.isSelected()){
+                int componentWidth = c.getWidth();
+                int componentHeight = c.getHeight();
+                String widthString = "Width: " + Integer.toString(componentWidth);
+                String heightString = "Height: " + Integer.toString(componentHeight);
+
+                g.drawString(widthString, annotationX, annotationY);
+                annotationY += fontHeight;
+                g.drawString(heightString, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
+
+            if(componentLocationsFilt.isSelected()){
+                int componentX = c.getX();
+                int componentY = c.getY();
+
+                String xString = "X: " + Integer.toString(componentX);
+                String yString = "Y: " + Integer.toString(componentY);
+
+                g.drawString(xString, annotationX, annotationY);
+                annotationY += fontHeight;
+                g.drawString(yString, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
+
+            if(componentClassesFilt.isSelected()){
+                String className = c.getClass().toString().split(" ")[1];
+                g.drawString(className, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
+
+            if(fontMetricsFilt.isSelected()){
+                String fontName = fm.getFont().getFontName();
+                String fontSize = Integer.toString(fm.getFont().getSize());
+                String fontString = fontName + " (" + fontSize + " pt)";
+                g.drawString(fontString, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
+
+            if(layoutManagerFilt.isSelected()){
+                // only JPanels can have layout managers
+                if(c instanceof JPanel){
+                    JPanel p = (JPanel) c;
+                    LayoutManager lm = p.getLayout();
+                    String layoutName = lm.toString();
+                    g.drawString(layoutName, annotationX, annotationY);
+                }
             }
         }
 
