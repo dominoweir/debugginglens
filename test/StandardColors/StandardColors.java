@@ -106,6 +106,8 @@ public class StandardColors extends JFrame {
                 .addComponent(labels[12])
         );
 
+
+
         pack();
     }
 

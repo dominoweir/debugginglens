@@ -23,7 +23,7 @@ public class GlassPaneDemo {
         // set up the content pane, where the "main GUI" lives.
         Container contentPane = frame.getContentPane();
         contentPane.setLayout(new FlowLayout());
-        contentPane.add(changeButton);
+        // contentPane.add(changeButton);
         contentPane.add(new JButton("Button 1"));
         contentPane.add(new JButton("Button 2"));
 

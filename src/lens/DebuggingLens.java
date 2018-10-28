@@ -6,7 +6,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.util.AbstractQueue;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +18,7 @@ class DebuggingLens extends JComponent implements ItemListener {
     Point currentPoint;
     Point oldPoint;
     Container contentPane;
+    JCheckBox checkBox;
     ArrayList<Component> componentsInRegion;
     private int width, height; // width and height of the debugging lens
 
@@ -29,10 +29,7 @@ class DebuggingLens extends JComponent implements ItemListener {
     private TitledBorder filtersBorder;
 
     public DebuggingLens(AbstractButton aButton, Container contentPane) {
-        CheckBoxListener listener = new CheckBoxListener(aButton,this, contentPane);
         this.contentPane =  contentPane;
-        addMouseListener(listener);
-        addMouseMotionListener(listener);
         componentsInRegion = new ArrayList<>();
 
         // init lens size
@@ -41,12 +38,18 @@ class DebuggingLens extends JComponent implements ItemListener {
 
         // init lens position
         Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
-        currentPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);;
+        currentPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
         oldPoint = currentPoint;
 
         // control panel stuff
         initCtrlPnl();
         setupCtrlPnl();
+
+        // listener setup
+        CheckBoxListener listener = new CheckBoxListener(checkBox,this, contentPane);
+        addMouseListener(listener);
+        addMouseMotionListener(listener);
+        checkBox.addItemListener(this);
     }
 
     private void updateComponentsInRegion(){
@@ -95,6 +98,7 @@ class DebuggingLens extends JComponent implements ItemListener {
             filtersBorder.setTitlePosition(TitledBorder.TOP);
             filtersPnl.setBorder(filtersBorder);
 
+            checkBox = new JCheckBox("Glass pane \"visible\"");
             borderLocationsFilt = new JCheckBox("Border Locations");
             borderWidthsFilt = new JCheckBox("Border Widths");
             componentSizesFilt = new JCheckBox("Component Sizes");
@@ -113,7 +117,8 @@ class DebuggingLens extends JComponent implements ItemListener {
     private void setupCtrlPnl() {
         lensControlPanel.setLayout(new GridLayout(1, 1));
         lensControlPanel.add(filtersPnl);
-            filtersPnl.setLayout(new GridLayout(6, 1));
+            filtersPnl.setLayout(new GridLayout(8, 1));
+            filtersPnl.add(checkBox);
             filtersPnl.add(borderLocationsFilt);
             filtersPnl.add(borderWidthsFilt);
             filtersPnl.add(componentSizesFilt);
@@ -204,10 +209,9 @@ class DebuggingLens extends JComponent implements ItemListener {
             }
         }
 
-        if (currentPoint != null) {
-            g.setColor(Color.black);
-            g.drawRect(currentPoint.x, currentPoint.y, width, height);
-        }
+        // actually draw the lens filter overlay
+        g.setColor(Color.black);
+        g.drawRect(currentPoint.x, currentPoint.y, width, height);
     }
 
     public void setCurrentPoint(Point p) {
