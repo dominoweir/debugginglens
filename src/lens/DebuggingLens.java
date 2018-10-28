@@ -6,7 +6,10 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
+import java.util.AbstractQueue;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -36,44 +39,52 @@ class DebuggingLens extends JComponent implements ItemListener {
         width = 100;
         height = 100;
 
+        // init lens position
+        Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
+        currentPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);;
+        oldPoint = currentPoint;
+
+        // init list of components
+        updateComponentsInRegion();
+
         // control panel stuff
         initCtrlPnl();
         setupCtrlPnl();
     }
 
     private void updateComponentsInRegion(){
-        double oldX = oldPoint.getX();
-        double oldY = oldPoint.getY();
-        double newX = currentPoint.getX();
-        double newY = currentPoint.getY();
-        int smallerX, biggerX, smallerY, biggerY;
-        if(oldX > newX){
-            smallerX = (int) newX;
-            biggerX = (int) oldX;
-        }
-        else{
-            smallerX = (int) oldX;
-            biggerX = (int) newX;
-        }
-        if(oldY > newY){
-            smallerY = (int) newY;
-            biggerY = (int) oldY;
-        }
-        else{
-            smallerY = (int) oldY;
-            biggerY = (int) newY;
-        }
+        int newX = (int) currentPoint.getX();
+        int newY = (int) currentPoint.getY();
+        boolean inRegion;
 
-        for(int i = smallerX; i < biggerX; i++){
-            for(int j = smallerY; j < biggerY + height; j++){
-                Point p = new Point(i, j);
-                Point containerPoint = SwingUtilities.convertPoint(this, p, contentPane);
-                Component component = SwingUtilities.getDeepestComponentAt(contentPane, containerPoint.x, containerPoint.y);
-                if(componentsInRegion.contains(component)){
-                    componentsInRegion.remove(component);
+        ArrayDeque<Component> componentQueue = new ArrayDeque<Component>();
+        componentQueue.addAll(Arrays.asList(contentPane.getComponents()));
+
+        while(!componentQueue.isEmpty()){
+            inRegion = false;
+            Component c = componentQueue.pop();
+            for(int i = newX; i <= newX + width; i++){
+                for(int j = newY; j <= newY + height; j++){
+                    if(c.getX() <= i && i <= c.getX() + c.getWidth()){
+                        if(c.getY() <= j && j <= c.getY() + c.getHeight()){
+                            inRegion = true;
+                            if(!componentsInRegion.contains(c)){
+                                componentsInRegion.add(c);
+                            }
+                        }
+                    }
+                }
+                if(inRegion){
+                    break;
+                }
+            }
+            if(!inRegion){
+                if(componentsInRegion.contains(c)){
+                    componentsInRegion.remove(c);
                 }
             }
         }
+
     }
 
     // construct the components on the control panel
