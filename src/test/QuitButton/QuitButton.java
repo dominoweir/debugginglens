@@ -1,23 +1,22 @@
 package test.QuitButton;
 
 import lens.DebuggingLens;
+
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
-public class QuitButton extends JFrame {
 
-    public QuitButton() {
-        initUI();
-    }
+public class QuitButton{
 
-    public final void initUI() {
+    private static JPanel initUI() {
 
         JPanel panel = new JPanel();
-        getContentPane().add(panel);
 
         panel.setLayout(null);
 
@@ -31,17 +30,25 @@ public class QuitButton extends JFrame {
 
         panel.add(quitButton);
 
-        setTitle("Quit button");
-        setSize(300, 200);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        return panel;
 
-        DebuggingLens dl = new DebuggingLens(getContentPane());
-        setGlassPane(dl);
     }
 
     public static void main(String[] args) {
-        QuitButton ex = new QuitButton();
-        ex.setVisible(true);
+        JFrame frame = new JFrame();
+        JPanel quitPanel = initUI();
+
+
+        frame.setTitle("Quit button");
+        frame.setSize(300, 200);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        frame.getContentPane().add(quitPanel);
+
+        DebuggingLens dl = new DebuggingLens(frame.getContentPane());
+        frame.setGlassPane(dl);
+        frame.setPreferredSize(new Dimension(200, 150));
+        frame.pack();
+        frame.setVisible(true);
     }
 }

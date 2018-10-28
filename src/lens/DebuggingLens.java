@@ -63,6 +63,14 @@ public class DebuggingLens extends JComponent implements ItemListener {
             inRegion = false;
             Component c = componentQueue.pop();
 
+            // check if there are any child components within the current component
+            try{
+                JPanel asPanel = (JPanel) c;
+                componentQueue.addAll(Arrays.asList(asPanel.getComponents()));
+            } catch(ClassCastException e){
+                
+            }
+
             for(int i = newX; i <= newX + width; i++){
                 for(int j = newY; j <= newY + height; j++){
                     if(c.getX() <= i && i <= c.getX() + c.getWidth()){
