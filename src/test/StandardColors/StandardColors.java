@@ -1,14 +1,11 @@
 package test.StandardColors;
 
-import javax.swing.GroupLayout;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.EventQueue;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import lens.DebuggingLens;
+
+import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 class MyLabel extends JLabel {
 
@@ -22,10 +19,13 @@ class MyLabel extends JLabel {
     }
 }
 
-public class StandardColors extends JFrame {
+public class StandardColors extends JComponent {
 
-    public StandardColors() {
+    JPanel contentPane;
 
+    public StandardColors(Container container) {
+
+        contentPane = (JPanel) container;
         initUI();
     }
 
@@ -46,12 +46,6 @@ public class StandardColors extends JFrame {
 
         createLayout(labels.toArray(new JLabel[labels.size()]));
 
-        setTitle("Standard colors");
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        DebuggingLens dl = new DebuggingLens(getContentPane());
-        setGlassPane(dl);
     }
 
     public JLabel createColouredLabel(Color col) {
@@ -65,11 +59,10 @@ public class StandardColors extends JFrame {
 
     private void createLayout(JLabel[] labels) {
 
-        var pane = (JPanel) getContentPane();
-        var gl = new GroupLayout(pane);
-        pane.setLayout(gl);
+        var gl = new GroupLayout(contentPane);
+        contentPane.setLayout(gl);
 
-        pane.setToolTipText("Content pane");
+        contentPane.setToolTipText("Content pane");
 
         gl.setAutoCreateContainerGaps(true);
         gl.setAutoCreateGaps(true);
@@ -111,17 +104,21 @@ public class StandardColors extends JFrame {
                         .addComponent(labels[11]))
                 .addComponent(labels[12])
         );
-
-
-
-        pack();
     }
 
     public static void main(String[] args) {
 
-        EventQueue.invokeLater(() -> {
-            var ex = new StandardColors();
-            ex.setVisible(true);
-        });
+        JFrame frame = new JFrame();
+        frame.setTitle("Standard colors");
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        StandardColors sc = new StandardColors(frame.getContentPane());
+        frame.getContentPane().add(sc);
+
+        DebuggingLens dl = new DebuggingLens(frame.getContentPane());
+        frame.setGlassPane(dl);
+        frame.pack();
+        frame.setVisible(true);
     }
 }
