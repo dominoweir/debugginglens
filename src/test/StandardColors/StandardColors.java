@@ -1,3 +1,5 @@
+package test.StandardColors;
+
 import javax.swing.GroupLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -6,6 +8,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.util.ArrayList;
+import lens.DebuggingLens;
 
 class MyLabel extends JLabel {
 
@@ -46,6 +49,9 @@ public class StandardColors extends JFrame {
         setTitle("Standard colors");
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        DebuggingLens dl = new DebuggingLens(getContentPane());
+        setGlassPane(dl);
     }
 
     public JLabel createColouredLabel(Color col) {

@@ -1,10 +1,11 @@
+package test.QuitButton;
+
+import lens.DebuggingLens;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 
 public class QuitButton extends JFrame {
@@ -34,12 +35,13 @@ public class QuitButton extends JFrame {
         setSize(300, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        DebuggingLens dl = new DebuggingLens(getContentPane());
+        setGlassPane(dl);
     }
 
     public static void main(String[] args) {
-        public void run() {
-            Example ex = new QuitButton();
-            ex.setVisible(true);
-        }
+        QuitButton ex = new QuitButton();
+        ex.setVisible(true);
     }
 }

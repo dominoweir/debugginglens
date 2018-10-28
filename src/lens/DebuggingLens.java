@@ -1,6 +1,5 @@
 package lens;
 
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -12,7 +11,7 @@ import java.util.Arrays;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
-class DebuggingLens extends JComponent implements ItemListener {
+public class DebuggingLens extends JComponent implements ItemListener {
 
     // used to save cursor position
     Point currentPoint;
@@ -28,7 +27,7 @@ class DebuggingLens extends JComponent implements ItemListener {
     private JPanel filtersPnl;
     private TitledBorder filtersBorder;
 
-    public DebuggingLens(AbstractButton aButton, Container contentPane) {
+    public DebuggingLens(Container contentPane) {
         this.contentPane =  contentPane;
         componentsInRegion = new ArrayList<>();
 
@@ -63,6 +62,7 @@ class DebuggingLens extends JComponent implements ItemListener {
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
+
             for(int i = newX; i <= newX + width; i++){
                 for(int j = newY; j <= newY + height; j++){
                     if(c.getX() <= i && i <= c.getX() + c.getWidth()){
@@ -153,6 +153,7 @@ class DebuggingLens extends JComponent implements ItemListener {
             if(borderLocationsFilt.isSelected()){
                 g.setColor(Color.red);
                 g.drawRect(c.getX(), c.getY(), c.getWidth(), c.getHeight());
+                g.setColor(Color.black);
             }
 
             if(borderWidthsFilt.isSelected()){

@@ -16,20 +16,14 @@ public class GlassPaneDemo {
         JFrame frame = new JFrame("GlassPaneDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // start creating and adding components.
-        JCheckBox changeButton = new JCheckBox("Glass pane \"visible\"");
-        changeButton.setSelected(false);
-
         // set up the content pane, where the "main GUI" lives.
         Container contentPane = frame.getContentPane();
         contentPane.setLayout(new FlowLayout());
-        // contentPane.add(changeButton);
         contentPane.add(new JButton("Button 1"));
         contentPane.add(new JButton("Button 2"));
 
         // set up the glass pane, which appears over both menu bar and content pane and is an item listener on the change button.
-        myDebuggingLens = new DebuggingLens(changeButton, frame.getContentPane());
-        changeButton.addItemListener(myDebuggingLens);
+        myDebuggingLens = new DebuggingLens(frame.getContentPane());
         frame.setGlassPane(myDebuggingLens);
 
         // show the window.
