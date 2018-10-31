@@ -106,7 +106,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
             filtersBorder.setTitlePosition(TitledBorder.TOP);
             filtersPnl.setBorder(filtersBorder);
 
-            checkBox = new JCheckBox("Glass pane \"visible\"");
+            checkBox = new JCheckBox("Lens on/off");
             borderLocationsFilt = new JCheckBox("Border Locations");
             borderWidthsFilt = new JCheckBox("Border Widths");
             componentSizesFilt = new JCheckBox("Component Sizes");

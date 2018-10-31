@@ -36,11 +36,11 @@ public class StandardColors extends JComponent {
                 Color.magenta, Color.orange, Color.pink, Color.red,
                 Color.white, Color.yellow };
 
-        var labels = new ArrayList<JLabel>();
+        ArrayList<JLabel> labels = new ArrayList<JLabel>();
 
-        for (var col : stdCols) {
+        for (Color col : stdCols) {
 
-            var lbl = createColouredLabel(col);
+            JLabel lbl = createColouredLabel(col);
             labels.add(lbl);
         }
 
@@ -50,7 +50,7 @@ public class StandardColors extends JComponent {
 
     public JLabel createColouredLabel(Color col) {
 
-        var lbl = new MyLabel();
+        MyLabel lbl = new MyLabel();
         lbl.setMinimumSize(new Dimension(90, 40));
         lbl.setBackground(col);
 
@@ -59,7 +59,7 @@ public class StandardColors extends JComponent {
 
     private void createLayout(JLabel[] labels) {
 
-        var gl = new GroupLayout(contentPane);
+        GroupLayout gl = new GroupLayout(contentPane);
         contentPane.setLayout(gl);
 
         contentPane.setToolTipText("Content pane");

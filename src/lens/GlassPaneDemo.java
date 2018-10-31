@@ -22,6 +22,22 @@ public class GlassPaneDemo {
         contentPane.add(new JButton("Button 1"));
         contentPane.add(new JButton("Button 2"));
 
+        // Create the radio buttons.
+        JRadioButton firstButton = new JRadioButton("Option 1");
+        firstButton.setSelected(true);
+        JRadioButton secondButton = new JRadioButton("Option 2");
+
+
+        // Group the radio buttons.
+        ButtonGroup group = new ButtonGroup();
+        group.add(firstButton);
+        group.add(secondButton);
+
+        contentPane.add(firstButton);
+        contentPane.add(secondButton);
+
+        contentPane.add(new JComboBox<>(new String[]{"Combo 1", "Combo 2"}));
+
         // set up the glass pane, which appears over both menu bar and content pane and is an item listener on the change button.
         myDebuggingLens = new DebuggingLens(frame.getContentPane());
         frame.setGlassPane(myDebuggingLens);
