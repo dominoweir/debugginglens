@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Stack;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -116,6 +117,15 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     }
 
+    // returns a relatively distinct color particular to the integer passed
+    private Color generateDistinctColor(int i) {
+
+        // this list of good looking distinct colors obtained from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+        String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#ffe119", "#800000", "#469990", "#4363d8", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#aaffc3", "#808000", "#ffd8b1", "#808080"};
+        int index = i % hexCodes.length;
+        return Color.decode(hexCodes[index]);
+    }
+
     // construct the components on the control panel
     private void initCtrlPnl() {
 
@@ -166,7 +176,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // refresh list of components within the lens
         updateComponentsInRegion();
 
+        // counter used for color selection
+        int i = 0;
+
         for(Component c : componentsInRegion) {
+
+            Color color = generateDistinctColor(i);
+            i++;
 
             // this is important for updating the next annotation location
             FontMetrics fm = c.getFontMetrics(c.getFont());
@@ -181,9 +197,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
             int annotationY = absPos.y + c.getHeight() + fontHeight;
 
             if(borderLocationsFilt.isSelected()){
-                g.setColor(Color.red);
+                g.setColor(color);
                 g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
-                g.setColor(Color.black);
             }
 
             if(borderWidthsFilt.isSelected()){

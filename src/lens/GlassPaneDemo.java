@@ -29,8 +29,6 @@ public class GlassPaneDemo {
 
         contentPane.add(panel);
 
-
-
         // Create the radio buttons.
         JRadioButton firstButton = new JRadioButton("Option 1");
         firstButton.setSelected(true);
