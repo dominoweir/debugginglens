@@ -55,8 +55,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     // refreshes the list of the components within the debugging lens
     private void updateComponentsInRegion(){
-        int newX = (int) currentPoint.getX();
-        int newY = (int) currentPoint.getY();
+        int newX = currentPoint.x;
+        int newY = currentPoint.y;
         boolean inRegion;
 
         // get children components of the contentPane into a queue
@@ -69,6 +69,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
+
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
+            // so nested components display correctly
+            Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
 
             // check if there are any child components within the current component
             try{
@@ -85,8 +89,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
                 for(int j = newY; j <= newY + height; j++){
 
                     // check if the current pixel is within component c
-                    if(c.getX() <= i && i <= c.getX() + c.getWidth()){
-                        if(c.getY() <= j && j <= c.getY() + c.getHeight()){
+                    if(absPos.x <= i && i <= absPos.x + c.getWidth()){
+                        if(absPos.y <= j && j <= absPos.y + c.getHeight()){
 
                             // if it is add to componentsInRegion and flag loop to break
                             inRegion = true;
@@ -168,13 +172,17 @@ public class DebuggingLens extends JComponent implements ItemListener {
             FontMetrics fm = c.getFontMetrics(c.getFont());
             int fontHeight = fm.getHeight();
 
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
+            // so nested components display correctly
+            Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
+
             // these will be updated as annotations are added to the component
-            int annotationX = c.getX();
-            int annotationY = c.getY() + c.getHeight() + fontHeight;
+            int annotationX = absPos.x;
+            int annotationY = absPos.y + c.getHeight() + fontHeight;
 
             if(borderLocationsFilt.isSelected()){
                 g.setColor(Color.red);
-                g.drawRect(c.getX(), c.getY(), c.getWidth(), c.getHeight());
+                g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
                 g.setColor(Color.black);
             }
 
@@ -195,8 +203,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
             }
 
             if(componentLocationsFilt.isSelected()){
-                int componentX = c.getX();
-                int componentY = c.getY();
+                int componentX = absPos.x;
+                int componentY = absPos.y;
 
                 String xString = "X: " + Integer.toString(componentX);
                 String yString = "Y: " + Integer.toString(componentY);
