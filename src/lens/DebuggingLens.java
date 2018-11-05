@@ -29,6 +29,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     public DebuggingLens(Container contentPane) {
         this.contentPane =  contentPane;
+
+        // keeps track of all the components within the region of the debugging lens
         componentsInRegion = new ArrayList<>();
 
         // init lens size
@@ -51,41 +53,60 @@ public class DebuggingLens extends JComponent implements ItemListener {
         checkBox.addItemListener(this);
     }
 
+    // refreshes the list of the components within the debugging lens
     private void updateComponentsInRegion(){
-        int newX = (int) currentPoint.getX();
-        int newY = (int) currentPoint.getY();
+        int newX = currentPoint.x;
+        int newY = currentPoint.y;
         boolean inRegion;
 
+        // get children components of the contentPane into a queue
         ArrayDeque<Component> componentQueue = new ArrayDeque<Component>();
         componentQueue.addAll(Arrays.asList(contentPane.getComponents()));
 
+        /* for all the components in queue:
+         - find their children (and add them to the queue for inspection too)
+         - determine if the component is within the lens boundaries and if it is add it to componentsInRegion */
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
 
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
+            // so nested components display correctly
+            Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
+
             // check if there are any child components within the current component
             try{
+                // cast c to JPanel to allow us to use getComponents() method to access its children
                 JPanel asPanel = (JPanel) c;
+                // add children to queue (so we can later look if they have children too)
                 componentQueue.addAll(Arrays.asList(asPanel.getComponents()));
             } catch(ClassCastException e){
                 
             }
 
+            // loop through all the (x,y) pixels positions in the lens
             for(int i = newX; i <= newX + width; i++){
                 for(int j = newY; j <= newY + height; j++){
-                    if(c.getX() <= i && i <= c.getX() + c.getWidth()){
-                        if(c.getY() <= j && j <= c.getY() + c.getHeight()){
+
+                    // check if the current pixel is within component c
+                    if(absPos.x <= i && i <= absPos.x + c.getWidth()){
+                        if(absPos.y <= j && j <= absPos.y + c.getHeight()){
+
+                            // if it is add to componentsInRegion and flag loop to break
                             inRegion = true;
                             if(!componentsInRegion.contains(c)){
                                 componentsInRegion.add(c);
                             }
+
                         }
                     }
+
                 }
                 if(inRegion){
                     break;
                 }
             }
+            // if component does not overlap region remove it from componentsInRegion if it was there before (due to an old lens position)
             if(!inRegion){
                 if(componentsInRegion.contains(c)){
                     componentsInRegion.remove(c);
@@ -116,17 +137,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
             layoutManagerFilt = new JCheckBox("Layout Managers");
 
             borderLocationsFilt.setSelected(true);
-
-        lensControlPanel.pack();
-        lensControlPanel.setVisible(true);
-
     }
     // setup and customize the components on the control panel
     private void setupCtrlPnl() {
-        lensControlPanel.setLayout(new GridLayout(1, 1));
-        lensControlPanel.add(filtersPnl);
-            filtersPnl.setLayout(new GridLayout(8, 1));
-            filtersPnl.add(checkBox);
+        lensControlPanel.setLayout(new BorderLayout());
+        lensControlPanel.add(checkBox, BorderLayout.NORTH);
+        lensControlPanel.add(filtersPnl, BorderLayout.CENTER);
+            filtersPnl.setLayout(new GridLayout(7, 1));
             filtersPnl.add(borderLocationsFilt);
             filtersPnl.add(borderWidthsFilt);
             filtersPnl.add(componentSizesFilt);
@@ -135,7 +152,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
             filtersPnl.add(fontMetricsFilt);
             filtersPnl.add(layoutManagerFilt);
 
-        lensControlPanel.pack();
+        lensControlPanel.setSize(250, 300);
         lensControlPanel.setVisible(true);
     }
 
@@ -146,6 +163,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     protected void paintComponent(Graphics g) {
 
+        // refresh list of components within the lens
         updateComponentsInRegion();
 
         for(Component c : componentsInRegion) {
@@ -154,13 +172,17 @@ public class DebuggingLens extends JComponent implements ItemListener {
             FontMetrics fm = c.getFontMetrics(c.getFont());
             int fontHeight = fm.getHeight();
 
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
+            // so nested components display correctly
+            Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
+
             // these will be updated as annotations are added to the component
-            int annotationX = c.getX();
-            int annotationY = c.getY() + c.getHeight() + fontHeight;
+            int annotationX = absPos.x;
+            int annotationY = absPos.y + c.getHeight() + fontHeight;
 
             if(borderLocationsFilt.isSelected()){
                 g.setColor(Color.red);
-                g.drawRect(c.getX(), c.getY(), c.getWidth(), c.getHeight());
+                g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
                 g.setColor(Color.black);
             }
 
@@ -181,8 +203,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
             }
 
             if(componentLocationsFilt.isSelected()){
-                int componentX = c.getX();
-                int componentY = c.getY();
+                int componentX = absPos.x;
+                int componentY = absPos.y;
 
                 String xString = "X: " + Integer.toString(componentX);
                 String yString = "Y: " + Integer.toString(componentY);
