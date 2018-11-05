@@ -133,17 +133,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
             layoutManagerFilt = new JCheckBox("Layout Managers");
 
             borderLocationsFilt.setSelected(true);
-
-        lensControlPanel.pack();
-        lensControlPanel.setVisible(true);
-
     }
     // setup and customize the components on the control panel
     private void setupCtrlPnl() {
-        lensControlPanel.setLayout(new GridLayout(1, 1));
-        lensControlPanel.add(filtersPnl);
-            filtersPnl.setLayout(new GridLayout(8, 1));
-            filtersPnl.add(checkBox);
+        lensControlPanel.setLayout(new BorderLayout());
+        lensControlPanel.add(checkBox, BorderLayout.NORTH);
+        lensControlPanel.add(filtersPnl, BorderLayout.CENTER);
+            filtersPnl.setLayout(new GridLayout(7, 1));
             filtersPnl.add(borderLocationsFilt);
             filtersPnl.add(borderWidthsFilt);
             filtersPnl.add(componentSizesFilt);
@@ -152,7 +148,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
             filtersPnl.add(fontMetricsFilt);
             filtersPnl.add(layoutManagerFilt);
 
-        lensControlPanel.pack();
+        lensControlPanel.setSize(250, 300);
         lensControlPanel.setVisible(true);
     }
 
