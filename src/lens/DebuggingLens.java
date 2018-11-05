@@ -120,8 +120,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
     // returns a relatively distinct color particular to the integer passed
     private Color generateDistinctColor(int i) {
 
-        // list of good looking distinct colors obtained from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
-        String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#469990", "#ffe119", "#800000", "#4363d8", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#aaffc3", "#808000", "#ffd8b1", "#808080"};
+        // this list of good looking distinct colors obtained from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+        String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#ffe119", "#800000", "#469990", "#4363d8", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#aaffc3", "#808000", "#ffd8b1", "#808080"};
         int index = i % hexCodes.length;
         return Color.decode(hexCodes[index]);
     }
