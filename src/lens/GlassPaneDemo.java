@@ -19,8 +19,17 @@ public class GlassPaneDemo {
         // set up the content pane, where the "main GUI" lives.
         Container contentPane = frame.getContentPane();
         contentPane.setLayout(new FlowLayout());
-        contentPane.add(new JButton("Button 1"));
-        contentPane.add(new JButton("Button 2"));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout());
+
+        panel.add(new JButton("Button 1"));
+        panel.add(new JButton("Button 2"));
+        panel.add(new JButton("Button 3"));
+
+        contentPane.add(panel);
+
+
 
         // set up the glass pane, which appears over both menu bar and content pane and is an item listener on the change button.
         myDebuggingLens = new DebuggingLens(frame.getContentPane());

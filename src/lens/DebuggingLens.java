@@ -29,6 +29,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     public DebuggingLens(Container contentPane) {
         this.contentPane =  contentPane;
+
+        // keeps track of all the components within the region of the debugging lens
         componentsInRegion = new ArrayList<>();
 
         // init lens size
@@ -51,41 +53,56 @@ public class DebuggingLens extends JComponent implements ItemListener {
         checkBox.addItemListener(this);
     }
 
+    // refreshes the list of the components within the debugging lens
     private void updateComponentsInRegion(){
         int newX = (int) currentPoint.getX();
         int newY = (int) currentPoint.getY();
         boolean inRegion;
 
+        // get children components of the contentPane into a queue
         ArrayDeque<Component> componentQueue = new ArrayDeque<Component>();
         componentQueue.addAll(Arrays.asList(contentPane.getComponents()));
 
+        /* for all the components in queue:
+         - find their children (and add them to the queue for inspection too)
+         - determine if the component is within the lens boundaries and if it is add it to componentsInRegion */
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
 
             // check if there are any child components within the current component
             try{
+                // cast c to JPanel to allow us to use getComponents() method to access its children
                 JPanel asPanel = (JPanel) c;
+                // add children to queue (so we can later look if they have children too)
                 componentQueue.addAll(Arrays.asList(asPanel.getComponents()));
             } catch(ClassCastException e){
                 
             }
 
+            // loop through all the (x,y) pixels positions in the lens
             for(int i = newX; i <= newX + width; i++){
                 for(int j = newY; j <= newY + height; j++){
+
+                    // check if the current pixel is within component c
                     if(c.getX() <= i && i <= c.getX() + c.getWidth()){
                         if(c.getY() <= j && j <= c.getY() + c.getHeight()){
+
+                            // if it is add to componentsInRegion and flag loop to break
                             inRegion = true;
                             if(!componentsInRegion.contains(c)){
                                 componentsInRegion.add(c);
                             }
+
                         }
                     }
+
                 }
                 if(inRegion){
                     break;
                 }
             }
+            // if component does not overlap region remove it from componentsInRegion if it was there before (due to an old lens position)
             if(!inRegion){
                 if(componentsInRegion.contains(c)){
                     componentsInRegion.remove(c);
@@ -146,6 +163,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     protected void paintComponent(Graphics g) {
 
+        // refresh list of components within the lens
         updateComponentsInRegion();
 
         for(Component c : componentsInRegion) {
