@@ -2,13 +2,10 @@ package lens;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Stack;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -20,6 +17,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     Container contentPane;
     JCheckBox checkBox;
     ArrayList<Component> componentsInRegion;
+    boolean locked;
     private int width, height; // width and height of the debugging lens
 
     // Control Panel stuff
@@ -29,6 +27,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     private TitledBorder filtersBorder;
 
     public DebuggingLens(Container contentPane) {
+        locked = false;
         this.contentPane =  contentPane;
 
         // keeps track of all the components within the region of the debugging lens
@@ -47,11 +46,14 @@ public class DebuggingLens extends JComponent implements ItemListener {
         initCtrlPnl();
         setupCtrlPnl();
 
-        // listener setup
-        CheckBoxListener listener = new CheckBoxListener(checkBox,this, contentPane);
-        addMouseListener(listener);
-        addMouseMotionListener(listener);
+        // enable/disable listener setup
+        CheckBoxListener checkBoxListener = new CheckBoxListener(checkBox,this, contentPane);
+        addMouseListener(checkBoxListener);
+        addMouseMotionListener(checkBoxListener);
         checkBox.addItemListener(this);
+
+        LockListener lockListener = new LockListener(this);
+        addKeyListener(lockListener);
     }
 
     // refreshes the list of the components within the debugging lens
@@ -114,7 +116,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
                 }
             }
         }
-
     }
 
     // returns a relatively distinct color particular to the integer passed
@@ -284,7 +285,9 @@ class CheckBoxListener extends MouseInputAdapter {
     }
 
     public void mouseMoved(MouseEvent e) {
-        redispatchMouseEvent(e, true);
+        if(glassPane.locked) redispatchMouseEvent(e, false);
+        else{ redispatchMouseEvent(e, true); }
+
     }
 
     public void mouseDragged(MouseEvent e) {
@@ -335,5 +338,21 @@ class CheckBoxListener extends MouseInputAdapter {
             glassPane.setCurrentPoint(glassPanePoint);
             glassPane.repaint();
         }
+    }
+}
+
+class LockListener extends KeyAdapter {
+    DebuggingLens dl;
+    public LockListener(DebuggingLens dl){
+        this.dl = dl;
+    }
+    @Override
+    public void keyTyped(KeyEvent e) {
+        char keyChar = e.getKeyChar();
+        if(keyChar == 'l' || keyChar == 'L'){
+            dl.locked = true;
+            System.out.println(e.toString());
+        }
+
     }
 }
