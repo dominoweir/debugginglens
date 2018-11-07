@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Stack;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -183,13 +182,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
             Color color = generateDistinctColor(i);
             i++;
+            g.setColor(color);
 
             // this is important for updating the next annotation location
             FontMetrics fm = c.getFontMetrics(c.getFont());
             int fontHeight = fm.getHeight();
 
-            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
-            // so nested components display correctly
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords Sso nested components display correctly
             Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
 
             // these will be updated as annotations are added to the component
@@ -197,7 +196,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
             int annotationY = absPos.y + c.getHeight() + fontHeight;
 
             if(borderLocationsFilt.isSelected()){
-                g.setColor(color);
                 g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
             }
 
