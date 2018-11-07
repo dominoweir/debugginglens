@@ -27,6 +27,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     private TitledBorder filtersBorder;
 
     public DebuggingLens(Container contentPane) {
+        setFocusable(true);
         locked = false;
         this.contentPane =  contentPane;
 
@@ -52,8 +53,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
         addMouseMotionListener(checkBoxListener);
         checkBox.addItemListener(this);
 
-        LockListener lockListener = new LockListener(this);
+        // lock lens in place listener
+        LockListener lockListener = new LockListener(this, contentPane);
         addKeyListener(lockListener);
+        setVisible(true);
     }
 
     // refreshes the list of the components within the debugging lens
@@ -342,14 +345,28 @@ class CheckBoxListener extends MouseInputAdapter {
 
 class LockListener extends KeyAdapter {
     DebuggingLens dl;
-    public LockListener(DebuggingLens dl){
+    Container contentPane;
+
+    public LockListener(DebuggingLens dl, Container contentPane){
         this.dl = dl;
+        this.contentPane = contentPane;
     }
+
     @Override
     public void keyTyped(KeyEvent e) {
         char keyChar = e.getKeyChar();
         if(keyChar == 'l' || keyChar == 'L'){
-            dl.locked = true;
+            dl.locked = !dl.locked;
+            System.out.println(e.toString());
+        }
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        char keyChar = e.getKeyChar();
+        if(keyChar == 'l' || keyChar == 'L'){
+            dl.locked = !dl.locked;
             System.out.println(e.toString());
         }
 
