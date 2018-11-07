@@ -27,7 +27,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
     private TitledBorder filtersBorder;
 
     public DebuggingLens(Container contentPane) {
-        setFocusable(true);
         locked = false;
         isResizing = false;
         this.contentPane =  contentPane;
@@ -55,6 +54,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
         checkBox.addItemListener(this);
 
         // lock lens in place listener
+        setFocusable(true);
+        requestFocus();
         LockListener lockListener = new LockListener(this, contentPane);
         addKeyListener(lockListener);
         setVisible(true);
@@ -177,6 +178,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
     }
 
     protected void paintComponent(Graphics g) {
+
+        // request focus on every redraw
+        requestFocus();
 
         // if the lens is being resized rubberband it
         if(isResizing) {
@@ -377,7 +381,6 @@ class LockListener extends KeyAdapter {
             dl.locked = !dl.locked;
             System.out.println(e.toString());
         }
-
     }
 
     @Override

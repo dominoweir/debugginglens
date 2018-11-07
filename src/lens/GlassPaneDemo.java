@@ -49,7 +49,7 @@ public class GlassPaneDemo {
         myDebuggingLens = new DebuggingLens(frame.getContentPane());
         frame.setGlassPane(myDebuggingLens);
 
-        // show the window.
+        // show the window
         frame.pack();
         frame.setVisible(true);
     }
