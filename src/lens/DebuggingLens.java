@@ -379,17 +379,6 @@ class LockListener extends KeyAdapter {
         char keyChar = e.getKeyChar();
         if(keyChar == 'l' || keyChar == 'L'){
             dl.locked = !dl.locked;
-            System.out.println(e.toString());
         }
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        char keyChar = e.getKeyChar();
-        if(keyChar == 'l' || keyChar == 'L'){
-            dl.locked = !dl.locked;
-            System.out.println(e.toString());
-        }
-
     }
 }
