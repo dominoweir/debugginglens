@@ -17,7 +17,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     Container contentPane;
     JCheckBox checkBox;
     ArrayList<Component> componentsInRegion;
-    boolean locked;
+    boolean locked, isResizing;
     private int width, height; // width and height of the debugging lens
 
     // Control Panel stuff
@@ -29,6 +29,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     public DebuggingLens(Container contentPane) {
         setFocusable(true);
         locked = false;
+        isResizing = false;
         this.contentPane =  contentPane;
 
         // keeps track of all the components within the region of the debugging lens
@@ -177,6 +178,11 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     protected void paintComponent(Graphics g) {
 
+        // if the lens is being resized rubberband it
+        if(isResizing) {
+
+        }
+
         // refresh list of components within the lens
         updateComponentsInRegion();
 
@@ -267,6 +273,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
         oldPoint = currentPoint;
         currentPoint = p;
     }
+
+    public void setIsResizing(boolean isResizing) {
+        this.isResizing = isResizing;
+    }
 }
 
 /**
@@ -279,6 +289,9 @@ class CheckBoxListener extends MouseInputAdapter {
     DebuggingLens glassPane;
     Container contentPane;
 
+    // flag if the lens is being resized
+    boolean isResizing = false;
+
     public CheckBoxListener(Component liveButton, DebuggingLens glassPane, Container contentPane) {
         toolkit = Toolkit.getDefaultToolkit();
         this.liveButton = liveButton;
@@ -287,18 +300,15 @@ class CheckBoxListener extends MouseInputAdapter {
     }
 
     public void mouseMoved(MouseEvent e) {
+
         if(glassPane.locked) redispatchMouseEvent(e, false);
         else{ redispatchMouseEvent(e, true); }
 
     }
 
-    public void mouseDragged(MouseEvent e) {
-        redispatchMouseEvent(e, false);
-    }
+    public void mouseDragged(MouseEvent e) { redispatchMouseEvent(e, true); }
 
-    public void mouseClicked(MouseEvent e) {
-        redispatchMouseEvent(e, false);
-    }
+    public void mouseClicked(MouseEvent e) { redispatchMouseEvent(e, false); }
 
     public void mouseEntered(MouseEvent e) {
         redispatchMouseEvent(e, false);
@@ -309,10 +319,17 @@ class CheckBoxListener extends MouseInputAdapter {
     }
 
     public void mousePressed(MouseEvent e) {
+
+        // todo: check if resize corner was clicked
+        isResizing = true;
+
         redispatchMouseEvent(e, false);
     }
 
     public void mouseReleased(MouseEvent e) {
+
+        isResizing = false;
+
         redispatchMouseEvent(e, false);
     }
 
@@ -338,6 +355,7 @@ class CheckBoxListener extends MouseInputAdapter {
         // update the glass pane if requested.
         if (repaint) {
             glassPane.setCurrentPoint(glassPanePoint);
+            glassPane.setIsResizing(isResizing);
             glassPane.repaint();
         }
     }
