@@ -183,7 +183,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
         requestFocus();
 
         // set clipping rectangle for lens
-        g.setClip(currentPoint.x, currentPoint.y, width + 2, height + 2);
+        g.setClip(currentPoint.x, currentPoint.y, width + 1, height + 1);
 
         // if the lens is being resized rubberband it
         if(isResizing) {
