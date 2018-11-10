@@ -11,23 +11,21 @@ import javax.swing.event.MouseInputAdapter;
 
 public class DebuggingLens extends JComponent implements ItemListener {
 
-    // used to save cursor position
-    Point currentPoint;
-    Point oldPoint;
-    Container contentPane;
-    JCheckBox checkBox;
-    ArrayList<Component> componentsInRegion;
-    boolean locked, isResizing;
-    private int width, height; // width and height of the debugging lens
+    private Point topLeftPoint;
+    private Container contentPane;
+    private JCheckBox checkBox;
+    private ArrayList<Component> componentsInRegion;
+    private boolean isLocked, isResizing;
+    private int width, height;
 
-    // Control Panel stuff
+    // control Panel stuff
     private JFrame lensControlPanel;
-    private JCheckBox borderLocationsFilt, borderWidthsFilt, componentSizesFilt, componentLocationsFilt, componentClassesFilt, fontMetricsFilt, layoutManagerFilt;
-    private JPanel filtersPnl;
+    private JCheckBox borderLocationsFilt, componentSizesFilt, componentLocationsFilt, componentClassesFilt, fontMetricsFilt, layoutManagerFilt;
+    private JPanel filtersPanel;
     private TitledBorder filtersBorder;
 
     public DebuggingLens(Container contentPane) {
-        locked = false;
+        isLocked = false;
         isResizing = false;
         this.contentPane =  contentPane;
 
@@ -38,22 +36,20 @@ public class DebuggingLens extends JComponent implements ItemListener {
         width = 100;
         height = 100;
 
-        // init lens position
+        // init lens position: convert the mouse's absolute location on the screen in to terms of the content pane
         Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
-        currentPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
-        oldPoint = currentPoint;
+        topLeftPoint = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
 
-        // control panel stuff
-        initCtrlPnl();
-        setupCtrlPnl();
+        // initialize and construct the control panel
+        initControlPanel();
 
-        // enable/disable listener setup
+        // enable/disable button listener setup
         CheckBoxListener checkBoxListener = new CheckBoxListener(checkBox,this, contentPane);
         addMouseListener(checkBoxListener);
         addMouseMotionListener(checkBoxListener);
         checkBox.addItemListener(this);
 
-        // lock lens in place listener
+        // lock lens in place listener setup
         setFocusable(true);
         requestFocus();
         LockListener lockListener = new LockListener(this, contentPane);
@@ -63,21 +59,18 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     // refreshes the list of the components within the debugging lens
     private void updateComponentsInRegion(){
-        int newX = currentPoint.x;
-        int newY = currentPoint.y;
+        int newX = topLeftPoint.x;
+        int newY = topLeftPoint.y;
         boolean inRegion;
-
         // get children components of the contentPane into a queue
         ArrayDeque<Component> componentQueue = new ArrayDeque<Component>();
         componentQueue.addAll(Arrays.asList(contentPane.getComponents()));
-
         /* for all the components in queue:
          - find their children (and add them to the queue for inspection too)
          - determine if the component is within the lens boundaries and if it is add it to componentsInRegion */
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
-
             // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
             // so nested components display correctly
             Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
@@ -91,11 +84,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
             } catch(ClassCastException e){
                 
             }
-
             // loop through all the (x,y) pixels positions in the lens
             for(int i = newX; i <= newX + width; i++){
                 for(int j = newY; j <= newY + height; j++){
-
                     // check if the current pixel is within component c
                     if(absPos.x <= i && i <= absPos.x + c.getWidth()){
                         if(absPos.y <= j && j <= absPos.y + c.getHeight()){
@@ -105,10 +96,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
                             if(!componentsInRegion.contains(c)){
                                 componentsInRegion.add(c);
                             }
-
                         }
                     }
-
                 }
                 if(inRegion){
                     break;
@@ -125,48 +114,43 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     // returns a relatively distinct color particular to the integer passed
     private Color generateDistinctColor(int i) {
-
         // this list of good looking distinct colors obtained from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
         String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#ffe119", "#800000", "#469990", "#4363d8", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#aaffc3", "#808000", "#ffd8b1", "#808080"};
         int index = i % hexCodes.length;
         return Color.decode(hexCodes[index]);
     }
 
-    // construct the components on the control panel
-    private void initCtrlPnl() {
-
-        // control panel
+    // constructs the components on the control panel
+    private void initControlPanel() {
         lensControlPanel = new JFrame("Debugging Lens Control Panel");
-        filtersPnl = new JPanel();
-            filtersBorder = new TitledBorder("Filters");
-            filtersBorder.setTitleJustification(TitledBorder.LEFT);
-            filtersBorder.setTitlePosition(TitledBorder.TOP);
-            filtersPnl.setBorder(filtersBorder);
+        filtersPanel = new JPanel();
 
-            checkBox = new JCheckBox("Lens on/off");
-            borderLocationsFilt = new JCheckBox("Border Locations");
-            borderWidthsFilt = new JCheckBox("Border Widths");
-            componentSizesFilt = new JCheckBox("Component Sizes");
-            componentLocationsFilt = new JCheckBox("Component Locations");
-            componentClassesFilt = new JCheckBox("Component Classes");
-            fontMetricsFilt = new JCheckBox("Font Details");
-            layoutManagerFilt = new JCheckBox("Layout Managers");
+        filtersBorder = new TitledBorder("Filters");
+        filtersBorder.setTitleJustification(TitledBorder.LEFT);
+        filtersBorder.setTitlePosition(TitledBorder.TOP);
+        filtersPanel.setBorder(filtersBorder);
 
-            borderLocationsFilt.setSelected(true);
-    }
-    // setup and customize the components on the control panel
-    private void setupCtrlPnl() {
+        checkBox = new JCheckBox("Lens on/off");
+        borderLocationsFilt = new JCheckBox("Border Locations");
+        componentSizesFilt = new JCheckBox("Component Sizes");
+        componentLocationsFilt = new JCheckBox("Component Locations");
+        componentClassesFilt = new JCheckBox("Component Classes");
+        fontMetricsFilt = new JCheckBox("Font Details");
+        layoutManagerFilt = new JCheckBox("Layout Managers");
+
+        borderLocationsFilt.setSelected(true);
+
         lensControlPanel.setLayout(new BorderLayout());
         lensControlPanel.add(checkBox, BorderLayout.NORTH);
-        lensControlPanel.add(filtersPnl, BorderLayout.CENTER);
-            filtersPnl.setLayout(new GridLayout(7, 1));
-            filtersPnl.add(borderLocationsFilt);
-            filtersPnl.add(borderWidthsFilt);
-            filtersPnl.add(componentSizesFilt);
-            filtersPnl.add(componentLocationsFilt);
-            filtersPnl.add(componentClassesFilt);
-            filtersPnl.add(fontMetricsFilt);
-            filtersPnl.add(layoutManagerFilt);
+        lensControlPanel.add(filtersPanel, BorderLayout.CENTER);
+
+        filtersPanel.setLayout(new GridLayout(7, 1));
+        filtersPanel.add(borderLocationsFilt);
+        filtersPanel.add(componentSizesFilt);
+        filtersPanel.add(componentLocationsFilt);
+        filtersPanel.add(componentClassesFilt);
+        filtersPanel.add(fontMetricsFilt);
+        filtersPanel.add(layoutManagerFilt);
 
         lensControlPanel.setSize(250, 300);
         lensControlPanel.setVisible(true);
@@ -182,10 +166,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // request focus on every redraw
         requestFocus();
 
-        // set clipping rectangle for lens
-        g.setClip(currentPoint.x, currentPoint.y, width + 1, height + 1);
+        // set clipping rectangle for lens (will not draw anything outside of the lens bounds)
+        g.setClip(topLeftPoint.x, topLeftPoint.y, width + 1, height + 1);
 
-        // if the lens is being resized rubberband it
+        // if the lens is being resized, rubber band it
         if(isResizing) {
 
         }
@@ -215,10 +199,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
             if(borderLocationsFilt.isSelected()){
                 g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
-            }
-
-            if(borderWidthsFilt.isSelected()){
-
             }
 
             if(componentSizesFilt.isSelected()){
@@ -273,17 +253,71 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         // actually draw the lens filter overlay
         g.setColor(Color.black);
-        g.drawRect(currentPoint.x, currentPoint.y, width, height);
+        g.drawRect(topLeftPoint.x, topLeftPoint.y, width, height);
+
+        // check if mouse is hovering over a corner of the lens, bring up circle to show it can be resized by dragging
+        if(isLocked && !isResizing){
+            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
+            int mouseX = mouseLocation.x;
+            int mouseY = mouseLocation.y;
+
+            g.setClip(contentPane.getX(), contentPane.getY(), contentPane.getWidth(), contentPane.getHeight());
+            g.setColor(Color.blue);
+
+            if(topLeftPoint.x - 5 <= mouseX && mouseX <= topLeftPoint.x + 5){
+                if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                    g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5, 10, 10);
+                }
+                else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                    g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5 + height, 10, 10);
+                }
+            }
+            else if(topLeftPoint.x - 5  + width <= mouseX && mouseX <= topLeftPoint.x + 5 + width){
+                if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                    g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5, 10, 10);
+                }
+                else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                    g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5 + height, 10, 10);
+                }
+            }
+        }
     }
 
-    public void setCurrentPoint(Point p) {
-        oldPoint = currentPoint;
-        currentPoint = p;
+    public boolean mouseIsOnCorner(){
+        Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+        SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
+        int mouseX = mouseLocation.x;
+        int mouseY = mouseLocation.y;
+
+        if(topLeftPoint.x - 5 <= mouseX && mouseX <= topLeftPoint.x + 5){
+            if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                return true;
+            }
+            else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                return true;
+            }
+        }
+        else if(topLeftPoint.x - 5  + width <= mouseX && mouseX <= topLeftPoint.x + 5 + width){
+            if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                return true;
+            }
+            else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                return true;
+            }
+        }
+        return false;
     }
 
-    public void setIsResizing(boolean isResizing) {
-        this.isResizing = isResizing;
-    }
+    public void setTopLeftPoint(Point p) { topLeftPoint = p; }
+
+    public boolean getIsResizing(){ return isResizing; }
+
+    public void setIsResizing(boolean isResizing) { this.isResizing = isResizing; }
+
+    public void setIsLocked(boolean isLocked){ this.isLocked = isLocked; }
+
+    public boolean getIsLocked(){ return isLocked; }
 }
 
 /**
@@ -291,60 +325,58 @@ public class DebuggingLens extends JComponent implements ItemListener {
  * interested in.  Redispatch them to the check box.
  */
 class CheckBoxListener extends MouseInputAdapter {
-    Toolkit toolkit;
-    Component liveButton;
-    DebuggingLens glassPane;
-    Container contentPane;
+    private Component liveButton;
+    private DebuggingLens debuggingLens;
+    private Container contentPane;
 
-    // flag if the lens is being resized
-    boolean isResizing = false;
-
-    public CheckBoxListener(Component liveButton, DebuggingLens glassPane, Container contentPane) {
-        toolkit = Toolkit.getDefaultToolkit();
+    public CheckBoxListener(Component liveButton, DebuggingLens debuggingLens, Container contentPane) {
         this.liveButton = liveButton;
-        this.glassPane = glassPane;
+        this.debuggingLens = debuggingLens;
         this.contentPane = contentPane;
     }
 
-    public void mouseMoved(MouseEvent e) {
+    public void mouseMoved(MouseEvent e) { redispatchMouseEvent(e, true); }
 
-        if(glassPane.locked) redispatchMouseEvent(e, false);
-        else{ redispatchMouseEvent(e, true); }
+    public void mouseDragged(MouseEvent e) {
+        if(debuggingLens.getIsResizing()){
+            redispatchMouseEvent(e, true);
+        }
+        else{
+            redispatchMouseEvent(e, false);
+        }
 
     }
-
-    public void mouseDragged(MouseEvent e) { redispatchMouseEvent(e, true); }
 
     public void mouseClicked(MouseEvent e) { redispatchMouseEvent(e, false); }
 
-    public void mouseEntered(MouseEvent e) {
-        redispatchMouseEvent(e, false);
-    }
+    public void mouseEntered(MouseEvent e) { redispatchMouseEvent(e, false); }
 
-    public void mouseExited(MouseEvent e) {
-        redispatchMouseEvent(e, false);
-    }
+    public void mouseExited(MouseEvent e) { redispatchMouseEvent(e, false); }
 
     public void mousePressed(MouseEvent e) {
-
-        // todo: check if resize corner was clicked
-        isResizing = true;
-
-        redispatchMouseEvent(e, false);
+        if(debuggingLens.mouseIsOnCorner()){
+            debuggingLens.setIsResizing(true);
+            redispatchMouseEvent(e, true);
+        }
+        else{
+            redispatchMouseEvent(e, false);
+        }
     }
 
     public void mouseReleased(MouseEvent e) {
-
-        isResizing = false;
-
-        redispatchMouseEvent(e, false);
+        if(debuggingLens.getIsResizing()){
+            debuggingLens.setIsResizing(false);
+            redispatchMouseEvent(e, true);
+        }
+        else{
+            redispatchMouseEvent(e, false);
+        }
     }
 
-    // A basic implementation of re-dispatching events.
     private void redispatchMouseEvent(MouseEvent e, boolean repaint) {
         Point glassPanePoint = e.getPoint();
         Container container = contentPane;
-        Point containerPoint = SwingUtilities.convertPoint(glassPane, glassPanePoint, contentPane);
+        Point containerPoint = SwingUtilities.convertPoint(debuggingLens, glassPanePoint, contentPane);
         // we're not in the content pane
         if (containerPoint.y < 0) {
             // The mouse event is over non-system window decorations, such as the ones provided by
@@ -355,15 +387,17 @@ class CheckBoxListener extends MouseInputAdapter {
             Component component = SwingUtilities.getDeepestComponentAt(container, containerPoint.x, containerPoint.y);
             // forward events over to the check box.
             if ((component != null) && (component.equals(liveButton))) {
-                Point componentPoint = SwingUtilities.convertPoint(glassPane, glassPanePoint, component);
+                Point componentPoint = SwingUtilities.convertPoint(debuggingLens, glassPanePoint, component);
                 component.dispatchEvent(new MouseEvent(component, e.getID(), e.getWhen(), e.getModifiers(), componentPoint.x, componentPoint.y, e.getClickCount(), e.isPopupTrigger()));
             }
         }
         // update the glass pane if requested.
         if (repaint) {
-            glassPane.setCurrentPoint(glassPanePoint);
-            glassPane.setIsResizing(isResizing);
-            glassPane.repaint();
+            if(!debuggingLens.getIsLocked()){
+                debuggingLens.setTopLeftPoint(glassPanePoint);
+            }
+
+            debuggingLens.repaint();
         }
     }
 }
@@ -381,7 +415,7 @@ class LockListener extends KeyAdapter {
     public void keyTyped(KeyEvent e) {
         char keyChar = e.getKeyChar();
         if(keyChar == 'l' || keyChar == 'L'){
-            dl.locked = !dl.locked;
+            dl.setIsLocked(!dl.getIsLocked());
         }
     }
 }
