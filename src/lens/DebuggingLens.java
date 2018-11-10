@@ -52,7 +52,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // lock lens in place listener setup
         setFocusable(true);
         requestFocus();
-        LockListener lockListener = new LockListener(this, contentPane);
+        LockListener lockListener = new LockListener(this);
         addKeyListener(lockListener);
         setVisible(true);
     }
@@ -374,15 +374,12 @@ class CheckBoxListener extends MouseInputAdapter {
     }
 
     private void redispatchMouseEvent(MouseEvent e, boolean repaint) {
+        // convert the location of the event to a position on the content pane
         Point glassPanePoint = e.getPoint();
         Container container = contentPane;
         Point containerPoint = SwingUtilities.convertPoint(debuggingLens, glassPanePoint, contentPane);
-        // we're not in the content pane
-        if (containerPoint.y < 0) {
-            // The mouse event is over non-system window decorations, such as the ones provided by
-            // the Java look and feel. Could be handled specially.
-        }
-        else {
+        // check if we're in the content pane
+        if (containerPoint.y > 0) {
             // The mouse event is probably over the content pane, but we still need to find out exactly which component it's over.
             Component component = SwingUtilities.getDeepestComponentAt(container, containerPoint.x, containerPoint.y);
             // forward events over to the check box.
@@ -396,19 +393,16 @@ class CheckBoxListener extends MouseInputAdapter {
             if(!debuggingLens.getIsLocked()){
                 debuggingLens.setTopLeftPoint(glassPanePoint);
             }
-
             debuggingLens.repaint();
         }
     }
 }
 
 class LockListener extends KeyAdapter {
-    DebuggingLens dl;
-    Container contentPane;
+    private DebuggingLens dl;
 
-    public LockListener(DebuggingLens dl, Container contentPane){
+    public LockListener(DebuggingLens dl){
         this.dl = dl;
-        this.contentPane = contentPane;
     }
 
     @Override
