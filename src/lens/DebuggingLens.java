@@ -171,7 +171,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         // if the lens is being resized, rubber band it
         if(isResizing) {
-
+            Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
+            Point mouseLocation = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
+            width = topLeftPoint.x - mouseLocation.x;
+            height = topLeftPoint.y - mouseLocation.y;
         }
 
         // refresh list of components within the lens
@@ -191,14 +194,14 @@ public class DebuggingLens extends JComponent implements ItemListener {
             int fontHeight = fm.getHeight();
 
             // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords Sso nested components display correctly
-            Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
+            Point absolutePosition = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
 
             // these will be updated as annotations are added to the component
-            int annotationX = absPos.x;
-            int annotationY = absPos.y + c.getHeight() + fontHeight;
+            int annotationX = absolutePosition.x;
+            int annotationY = absolutePosition.y + c.getHeight() + fontHeight;
 
             if(borderLocationsFilt.isSelected()){
-                g.drawRect(absPos.x, absPos.y, c.getWidth(), c.getHeight());
+                g.drawRect(absolutePosition.x, absolutePosition.y, c.getWidth(), c.getHeight());
             }
 
             if(componentSizesFilt.isSelected()){
@@ -214,8 +217,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
             }
 
             if(componentLocationsFilt.isSelected()){
-                int componentX = absPos.x;
-                int componentY = absPos.y;
+                int componentX = absolutePosition.x;
+                int componentY = absolutePosition.y;
 
                 String xString = "X: " + Integer.toString(componentX);
                 String yString = "Y: " + Integer.toString(componentY);
@@ -284,6 +287,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
         }
     }
 
+    // check if the mouse is located on or very near one of the corners of the lens
     public boolean mouseIsOnCorner(){
         Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
         SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
@@ -382,8 +386,11 @@ class CheckBoxListener extends MouseInputAdapter {
         if (containerPoint.y > 0) {
             // The mouse event is probably over the content pane, but we still need to find out exactly which component it's over.
             Component component = SwingUtilities.getDeepestComponentAt(container, containerPoint.x, containerPoint.y);
-            // forward events over to the check box.
             if ((component != null) && (component.equals(liveButton))) {
+                // clear lens state
+                debuggingLens.setIsLocked(false);
+                debuggingLens.setIsResizing(false);
+                // forward events over to the check box
                 Point componentPoint = SwingUtilities.convertPoint(debuggingLens, glassPanePoint, component);
                 component.dispatchEvent(new MouseEvent(component, e.getID(), e.getWhen(), e.getModifiers(), componentPoint.x, componentPoint.y, e.getClickCount(), e.isPopupTrigger()));
             }
@@ -398,6 +405,10 @@ class CheckBoxListener extends MouseInputAdapter {
     }
 }
 
+/**
+ * Listen for all key press events. Lock/unlock the debugging
+ * lens if the key pressed was upper or lower case L
+ */
 class LockListener extends KeyAdapter {
     private DebuggingLens dl;
 
