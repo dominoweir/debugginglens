@@ -171,8 +171,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         // if the lens is being resized, rubber band it
         if(isResizing) {
-            Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
-            Point mouseLocation = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
+            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            // Point mouseLocation = SwingUtilities.convertPoint(this, absoluteLocation, contentPane);
+            SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
             width = Math.abs(topLeftPoint.x - mouseLocation.x);
             height = Math.abs(topLeftPoint.y - mouseLocation.y);
         }
