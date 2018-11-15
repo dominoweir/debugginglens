@@ -1,7 +1,5 @@
 package lens;
 
-import sun.reflect.generics.visitor.Reifier;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -30,8 +28,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
     private JPanel filtersPanel;
     private TitledBorder filtersBorder;
 
+    // the current state of lens resizing (if it is being resized the position indicated the corner being dragged by the user)
     enum Resizing {
-        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, FALSE;
+        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, FALSE
     }
 
     public DebuggingLens(Container contentPane) {
@@ -44,8 +43,8 @@ public class DebuggingLens extends JComponent implements ItemListener {
         annotations = new HashSet<>();
 
         // init lens size
-        width = 100;
-        height = 100;
+        width = 200;
+        height = 200;
 
         // init lens position: convert the mouse's absolute location on the screen in to terms of the content pane
         Point absoluteLocation = MouseInfo.getPointerInfo().getLocation();
@@ -216,6 +215,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
         g.setColor(Color.black);
         g.drawRect(xMin, yMin, width, height);
 
+        // reset cursor to default
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+
         // check if mouse is hovering over a corner of the lens, bring up circle to show it can be resized by dragging
         if(isLocked && isResizing == Resizing.FALSE){
             int mouseX = mouseLocation.x;
@@ -225,18 +227,26 @@ public class DebuggingLens extends JComponent implements ItemListener {
             g.setColor(Color.blue);
 
             if(topLeftPoint.x - 5 <= mouseX && mouseX <= topLeftPoint.x + 5){
+                // top left
                 if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                    setCursor(new Cursor(Cursor.NW_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5, 10, 10);
                 }
                 else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                    // bottom left
+                    setCursor(new Cursor(Cursor.SW_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5 + height, 10, 10);
                 }
             }
             else if(topLeftPoint.x - 5  + width <= mouseX && mouseX <= topLeftPoint.x + 5 + width){
                 if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
+                    // top right
+                    setCursor(new Cursor(Cursor.NE_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5, 10, 10);
                 }
                 else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
+                    // bottom right
+                    setCursor(new Cursor(Cursor.SE_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5 + height, 10, 10);
                 }
             }
@@ -343,15 +353,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     public void setTopLeftPoint(Point p) { topLeftPoint = p; }
 
-    public Point getTopLeftPoint() { return topLeftPoint; }
-
     public Resizing getIsResizing(){ return isResizing; }
 
     public void setIsResizing(Resizing isResizing) { this.isResizing = isResizing; }
 
     public void setIsLocked(boolean isLocked){ this.isLocked = isLocked; }
 
-    // takes the corner being resized and saves the relevant anchor corner point
+    // takes the enum description of the corner being resized and saves the relevant anchor corner point
     public void setResizingAnchorPoint(Resizing corner) {
         switch (corner) {
             case TOP_LEFT:
@@ -369,6 +377,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
             case BOTTOM_RIGHT:
                 // top left corner is the anchor
                 resizingAnchorPoint = topLeftPoint;
+                break;
+            default:
+                resizingAnchorPoint = null;
                 break;
         }
     }
@@ -444,6 +455,9 @@ class CheckBoxListener extends MouseInputAdapter {
             // exit rubberbanding mode
             debuggingLens.setIsResizing(DebuggingLens.Resizing.FALSE);
             redispatchMouseEvent(e, true);
+
+            // reset cursor to the default cursor
+            debuggingLens.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
         else{
             redispatchMouseEvent(e, false);
