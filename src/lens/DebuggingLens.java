@@ -8,6 +8,7 @@ import java.awt.event.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MouseInputAdapter;
 
@@ -20,6 +21,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     private boolean isLocked;
     private Resizing isResizing;
     private int width, height;
+    private HashSet<Point> annotations;
 
     // control Panel stuff
     private JFrame lensControlPanel;
@@ -38,6 +40,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         // keeps track of all the components within the region of the debugging lens
         componentsInRegion = new ArrayList<>();
+        annotations = new HashSet<>();
 
         // init lens size
         width = 100;
@@ -78,18 +81,19 @@ public class DebuggingLens extends JComponent implements ItemListener {
         while(!componentQueue.isEmpty()){
             inRegion = false;
             Component c = componentQueue.pop();
-            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords
+            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coordinates
             // so nested components display correctly
             Point absPos = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
-
             // check if there are any child components within the current component
-            try{
-                // cast c to JPanel to allow us to use getComponents() method to access its children
+            // cast c, which allows us to use getComponents() method to access its children
+            // then add children to queue (so we can later look if they have children too)
+            if(c instanceof JPanel){
                 JPanel asPanel = (JPanel) c;
-                // add children to queue (so we can later look if they have children too)
                 componentQueue.addAll(Arrays.asList(asPanel.getComponents()));
-            } catch(ClassCastException e){
-                
+            }
+            else if(c instanceof JSplitPane){
+                JSplitPane asPane = (JSplitPane) c;
+                componentQueue.addAll(Arrays.asList(asPane.getComponents()));
             }
             // loop through all the (x,y) pixels positions in the lens
             for(int i = newX; i <= newX + width; i++){
@@ -97,7 +101,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
                     // check if the current pixel is within component c
                     if(absPos.x <= i && i <= absPos.x + c.getWidth()){
                         if(absPos.y <= j && j <= absPos.y + c.getHeight()){
-
                             // if it is add to componentsInRegion and flag loop to break
                             inRegion = true;
                             if(!componentsInRegion.contains(c)){
@@ -122,7 +125,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
     // returns a relatively distinct color particular to the integer passed
     private Color generateDistinctColor(int i) {
         // this list of good looking distinct colors obtained from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
-        String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#ffe119", "#800000", "#469990", "#4363d8", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#aaffc3", "#808000", "#ffd8b1", "#808080"};
+        String[] hexCodes = { "#e6194b", "#000075", "#3cb44b", "#f58231", "#800000", "#469990", "#4363d8", "#911eb4", "#f032e6", "#008080", "#9a6324", "#808000", "#808080"};
         int index = i % hexCodes.length;
         return Color.decode(hexCodes[index]);
     }
@@ -173,6 +176,9 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // request focus on every redraw
         requestFocus();
 
+        // clear locations of annotations (bc we're redrawing them anyways)
+        annotations.clear();
+      
         // get mouse location (for use in rubberbanding)
         Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
         SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
@@ -215,74 +221,10 @@ public class DebuggingLens extends JComponent implements ItemListener {
         int i = 0;
 
         for(Component c : componentsInRegion) {
-
             Color color = generateDistinctColor(i);
             i++;
             g.setColor(color);
-
-            // this is important for updating the next annotation location
-            FontMetrics fm = c.getFontMetrics(c.getFont());
-            int fontHeight = fm.getHeight();
-
-            // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords Sso nested components display correctly
-            Point absolutePosition = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
-
-            // these will be updated as annotations are added to the component
-            int annotationX = absolutePosition.x;
-            int annotationY = absolutePosition.y + c.getHeight() + fontHeight;
-
-            if(borderLocationsFilt.isSelected()){
-                g.drawRect(absolutePosition.x, absolutePosition.y, c.getWidth(), c.getHeight());
-            }
-
-            if(componentSizesFilt.isSelected()){
-                int componentWidth = c.getWidth();
-                int componentHeight = c.getHeight();
-                String widthString = "Width: " + Integer.toString(componentWidth);
-                String heightString = "Height: " + Integer.toString(componentHeight);
-
-                g.drawString(widthString, annotationX, annotationY);
-                annotationY += fontHeight;
-                g.drawString(heightString, annotationX, annotationY);
-                annotationY += fontHeight;
-            }
-
-            if(componentLocationsFilt.isSelected()){
-                int componentX = absolutePosition.x;
-                int componentY = absolutePosition.y;
-
-                String xString = "X: " + Integer.toString(componentX);
-                String yString = "Y: " + Integer.toString(componentY);
-
-                g.drawString(xString, annotationX, annotationY);
-                annotationY += fontHeight;
-                g.drawString(yString, annotationX, annotationY);
-                annotationY += fontHeight;
-            }
-
-            if(componentClassesFilt.isSelected()){
-                String className = c.getClass().toString().split(" ")[1];
-                g.drawString(className, annotationX, annotationY);
-                annotationY += fontHeight;
-            }
-
-            if(fontMetricsFilt.isSelected()){
-                String fontName = fm.getFont().getFontName();
-                String fontSize = Integer.toString(fm.getFont().getSize());
-                String fontString = fontName + " (" + fontSize + " pt)";
-                g.drawString(fontString, annotationX, annotationY);
-                annotationY += fontHeight;
-            }
-
-            if(layoutManagerFilt.isSelected()){
-                // only JPanels can have layout managers
-                if(c instanceof JPanel){
-                    JPanel p = (JPanel) c;
-                    LayoutManager lm = p.getLayout();
-                    String layoutName = lm.toString();
-                    g.drawString(layoutName, annotationX, annotationY);
-                }
-            }
+            drawAnnotations(c, g);
         }
 
         // actually draw the lens filter overlay
@@ -312,6 +254,72 @@ public class DebuggingLens extends JComponent implements ItemListener {
                 else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
                     g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5 + height, 10, 10);
                 }
+            }
+        }
+    }
+
+    private void drawAnnotations(Component c, Graphics g){
+        // this is important for updating the next annotation location
+        FontMetrics fm = c.getFontMetrics(c.getFont());
+        int fontHeight = fm.getHeight();
+
+        // getLocation(), getX(), and getY() gives position relative to parent, convert to contentPane coords Sso nested components display correctly
+        Point absolutePosition = new Point(SwingUtilities.convertPoint(c.getParent(), c.getLocation(), contentPane));
+
+        // these will be updated as annotations are added to the component
+        int annotationX = absolutePosition.x;
+        int annotationY = absolutePosition.y + c.getHeight() + fontHeight;
+
+        if(borderLocationsFilt.isSelected()){
+            g.drawRect(absolutePosition.x, absolutePosition.y, c.getWidth(), c.getHeight());
+        }
+
+        if(componentSizesFilt.isSelected()){
+            int componentWidth = c.getWidth();
+            int componentHeight = c.getHeight();
+            String widthString = "W: " + Integer.toString(componentWidth);
+            String heightString = "H: " + Integer.toString(componentHeight);
+
+            g.drawString(widthString, annotationX, annotationY);
+            annotationY += fontHeight;
+            g.drawString(heightString, annotationX, annotationY);
+            annotationY += fontHeight;
+        }
+
+        if(componentLocationsFilt.isSelected()){
+            int componentX = absolutePosition.x;
+            int componentY = absolutePosition.y;
+
+            String xString = "X: " + Integer.toString(componentX);
+            String yString = "Y: " + Integer.toString(componentY);
+
+            g.drawString(xString, annotationX, annotationY);
+            annotationY += fontHeight;
+            g.drawString(yString, annotationX, annotationY);
+            annotationY += fontHeight;
+        }
+
+        if(componentClassesFilt.isSelected()){
+            String className = c.getClass().toString().split(" ")[1];
+            g.drawString(className, annotationX, annotationY);
+            annotationY += fontHeight;
+        }
+
+        if(fontMetricsFilt.isSelected()){
+            String fontName = fm.getFont().getFontName();
+            String fontSize = Integer.toString(fm.getFont().getSize());
+            String fontString = fontName + " (" + fontSize + " pt)";
+            g.drawString(fontString, annotationX, annotationY);
+            annotationY += fontHeight;
+        }
+
+        if(layoutManagerFilt.isSelected()){
+            // only JPanels can have layout managers
+            if(c instanceof JPanel){
+                JPanel p = (JPanel) c;
+                LayoutManager lm = p.getLayout();
+                String layoutName = lm.toString();
+                g.drawString(layoutName, annotationX, annotationY);
             }
         }
     }
@@ -395,9 +403,10 @@ class CheckBoxListener extends MouseInputAdapter {
     public void mouseExited(MouseEvent e) { redispatchMouseEvent(e, false); }
 
     public void mousePressed(MouseEvent e) {
-        System.out.println(debuggingLens.mouseIsOnCorner());
-        if(debuggingLens.mouseIsOnCorner()  != DebuggingLens.Resizing.FALSE){
+      
+        if((debuggingLens.mouseIsOnCorner()  != DebuggingLens.Resizing.FALSE)  && debuggingLens.getIsLocked()){
             debuggingLens.setIsResizing(DebuggingLens.Resizing.BOTTOM_RIGHT);
+
             redispatchMouseEvent(e, true);
         }
         else{
