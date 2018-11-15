@@ -15,6 +15,7 @@ import javax.swing.event.MouseInputAdapter;
 public class DebuggingLens extends JComponent implements ItemListener {
 
     private Point topLeftPoint;
+    private Point resizingAnchorPoint;
     private Container contentPane;
     private JCheckBox checkBox;
     private ArrayList<Component> componentsInRegion;
@@ -187,29 +188,13 @@ public class DebuggingLens extends JComponent implements ItemListener {
         int xMin = topLeftPoint.x;
         int yMin = topLeftPoint.y;
 
-        switch (isResizing) {
-            case BOTTOM_RIGHT:
-                xMin = Math.min(topLeftPoint.x, mouseLocation.x);
-                yMin = Math.min(topLeftPoint.y, mouseLocation.y);
-                width = Math.abs(topLeftPoint.x - mouseLocation.x);
-                height = Math.abs(topLeftPoint.y - mouseLocation.y);
-                break;
-            case TOP_RIGHT:
-                xMin = Math.min(topLeftPoint.x, mouseLocation.x);
-                width = Math.abs(topLeftPoint.x - mouseLocation.x);
-                break;
-            case BOTTOM_LEFT:
-                yMin = Math.min(topLeftPoint.y, mouseLocation.y);
-                height = Math.abs(topLeftPoint.y - mouseLocation.y);
-                break;
-            case TOP_LEFT:
-                xMin = mouseLocation.x;
-                yMin = mouseLocation.y;
-                width = width + (topLeftPoint.x - mouseLocation.x);
-                height = height + (topLeftPoint.y - mouseLocation.y);
-                break;
+        // if resizing determine the drawing coordinates around the anchor point
+        if(isResizing != Resizing.FALSE) {
+            xMin = Math.min(resizingAnchorPoint.x, mouseLocation.x);
+            yMin = Math.min(resizingAnchorPoint.y, mouseLocation.y);
+            width = Math.abs(resizingAnchorPoint.x - mouseLocation.x);
+            height = Math.abs(resizingAnchorPoint.y - mouseLocation.y);
         }
-
 
         // set clipping rectangle for lens (will not draw anything outside of the lens bounds)
         g.setClip(xMin, yMin, width + 1, height + 1);
@@ -366,6 +351,31 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
     public void setIsLocked(boolean isLocked){ this.isLocked = isLocked; }
 
+    // takes the corner being resized and saves the relevant anchor corner point
+    public void setResizingAnchorPoint(Resizing corner) {
+        switch (corner) {
+            case TOP_LEFT:
+                // bottom right corner is the anchor
+                resizingAnchorPoint = new Point(topLeftPoint.x + width, topLeftPoint.y + height);
+                break;
+            case TOP_RIGHT:
+                // bottom left corner is the anchor
+                resizingAnchorPoint = new Point(topLeftPoint.x, topLeftPoint.y + height);
+                break;
+            case BOTTOM_LEFT:
+                // top right corner is the anchor
+                resizingAnchorPoint = new Point(topLeftPoint.x + width, topLeftPoint.y);
+                break;
+            case BOTTOM_RIGHT:
+                // top left corner is the anchor
+                resizingAnchorPoint = topLeftPoint;
+                break;
+        }
+    }
+
+    // gets anchor point
+    public Point getResizingAnchorPoint() { return resizingAnchorPoint; }
+
     public boolean getIsLocked(){ return isLocked; }
 }
 
@@ -403,9 +413,14 @@ class CheckBoxListener extends MouseInputAdapter {
     public void mouseExited(MouseEvent e) { redispatchMouseEvent(e, false); }
 
     public void mousePressed(MouseEvent e) {
-      
-        if((debuggingLens.mouseIsOnCorner()  != DebuggingLens.Resizing.FALSE)  && debuggingLens.getIsLocked()){
-            debuggingLens.setIsResizing(DebuggingLens.Resizing.BOTTOM_RIGHT);
+
+        // check if mouse is on corner if lens is locked
+        if((debuggingLens.mouseIsOnCorner() != DebuggingLens.Resizing.FALSE) && debuggingLens.getIsLocked()){
+
+            // enter resizing mode for the appropriate corner
+            debuggingLens.setIsResizing(debuggingLens.mouseIsOnCorner());
+            // set the anchor point for the lens to rubberband around
+            debuggingLens.setResizingAnchorPoint(debuggingLens.mouseIsOnCorner());
 
             redispatchMouseEvent(e, true);
         }
@@ -420,10 +435,13 @@ class CheckBoxListener extends MouseInputAdapter {
             // update the top left corner
             Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
             SwingUtilities.convertPointFromScreen(mouseLocation, contentPane);
-            int xMin = Math.min(debuggingLens.getTopLeftPoint().x, mouseLocation.x);
-            int yMin = Math.min(debuggingLens.getTopLeftPoint().y, mouseLocation.y);
+
+            // set the top left point equal to the final result of rubberbanding
+            int xMin = Math.min(debuggingLens.getResizingAnchorPoint().x, mouseLocation.x);
+            int yMin = Math.min(debuggingLens.getResizingAnchorPoint().y, mouseLocation.y);
             debuggingLens.setTopLeftPoint(new Point(xMin, yMin));
 
+            // exit rubberbanding mode
             debuggingLens.setIsResizing(DebuggingLens.Resizing.FALSE);
             redispatchMouseEvent(e, true);
         }
