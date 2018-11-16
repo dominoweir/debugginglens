@@ -12,12 +12,12 @@ import javax.swing.event.MouseInputAdapter;
 
 public class DebuggingLens extends JComponent implements ItemListener {
 
-    private Point topLeftPoint;
-    private Point resizingAnchorPoint;
+    private boolean isLocked;
     private Container contentPane;
     private JCheckBox checkBox;
     private ArrayList<Component> componentsInRegion;
-    private boolean isLocked;
+    private Point topLeftPoint;
+    private Point resizingAnchorPoint;
     private Resizing isResizing;
     private int width, height;
     private HashSet<Point> annotations;
@@ -195,6 +195,25 @@ public class DebuggingLens extends JComponent implements ItemListener {
             height = Math.abs(resizingAnchorPoint.y - mouseLocation.y);
         }
 
+        // set the cursor to the appropriate corner if resizing
+        switch (isResizing) {
+            case TOP_LEFT:
+                setCursor(new Cursor(Cursor.NW_RESIZE_CURSOR));
+                break;
+            case TOP_RIGHT:
+                setCursor(new Cursor(Cursor.NE_RESIZE_CURSOR));
+                break;
+            case BOTTOM_LEFT:
+                setCursor(new Cursor(Cursor.SW_RESIZE_CURSOR));
+                break;
+            case BOTTOM_RIGHT:
+                setCursor(new Cursor(Cursor.SE_RESIZE_CURSOR));
+                break;
+            default:
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                break;
+        }
+
         // set clipping rectangle for lens (will not draw anything outside of the lens bounds)
         g.setClip(xMin, yMin, width + 1, height + 1);
 
@@ -204,6 +223,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // counter used for color selection
         int i = 0;
 
+        // draw annotations for each component
         for(Component c : componentsInRegion) {
             Color color = generateDistinctColor(i);
             i++;
@@ -214,9 +234,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
         // actually draw the lens filter overlay
         g.setColor(Color.black);
         g.drawRect(xMin, yMin, width, height);
-
-        // reset cursor to default
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 
         // check if mouse is hovering over a corner of the lens, bring up circle to show it can be resized by dragging
         if(isLocked && isResizing == Resizing.FALSE){
@@ -348,6 +365,7 @@ public class DebuggingLens extends JComponent implements ItemListener {
                 return Resizing.BOTTOM_RIGHT;
             }
         }
+        // not on any corner
         return Resizing.FALSE;
     }
 
