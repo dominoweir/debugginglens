@@ -175,9 +175,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         // request focus on every redraw
         requestFocus();
-
-        // clear locations of annotations (bc we're redrawing them anyways)
-        annotations.clear();
       
         // get mouse location (for use in rubberbanding)
         Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
@@ -313,16 +310,44 @@ public class DebuggingLens extends JComponent implements ItemListener {
 
         if(componentClassesFilt.isSelected()){
             String className = c.getClass().toString().split(" ")[1];
-            g.drawString(className, annotationX, annotationY);
-            annotationY += fontHeight;
+            if(fm.stringWidth(className) > c.getWidth()){
+                int processed = 0;
+                while(processed < className.length()){
+                    StringBuilder sb = new StringBuilder();
+                    while(fm.stringWidth(sb.toString()) < c.getWidth() && processed < className.length()){
+                        sb.append(className.charAt(processed));
+                        processed++;
+                    }
+                    g.drawString(sb.toString(), annotationX, annotationY);
+                    annotationY += fontHeight;
+                }
+            }
+            else{
+                g.drawString(className, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
         }
 
         if(fontMetricsFilt.isSelected()){
             String fontName = fm.getFont().getFontName();
             String fontSize = Integer.toString(fm.getFont().getSize());
             String fontString = fontName + " (" + fontSize + " pt)";
-            g.drawString(fontString, annotationX, annotationY);
-            annotationY += fontHeight;
+            if(fm.stringWidth(fontString) > c.getWidth()){
+                int processed = 0;
+                while(processed < fontString.length()){
+                    StringBuilder sb = new StringBuilder();
+                    while(fm.stringWidth(sb.toString()) < c.getWidth() && processed < fontString.length()){
+                        sb.append(fontString.charAt(processed));
+                        processed++;
+                    }
+                    g.drawString(sb.toString(), annotationX, annotationY);
+                    annotationY += fontHeight;
+                }
+            }
+            else{
+                g.drawString(fontString, annotationX, annotationY);
+                annotationY += fontHeight;
+            }
         }
 
         if(layoutManagerFilt.isSelected()){
@@ -331,7 +356,21 @@ public class DebuggingLens extends JComponent implements ItemListener {
                 JPanel p = (JPanel) c;
                 LayoutManager lm = p.getLayout();
                 String layoutName = lm.toString();
-                g.drawString(layoutName, annotationX, annotationY);
+                if(fm.stringWidth(layoutName) > c.getWidth()){
+                    int processed = 0;
+                    while(processed < layoutName.length()){
+                        StringBuilder sb = new StringBuilder();
+                        while(fm.stringWidth(sb.toString()) < c.getWidth() && processed < layoutName.length()){
+                            sb.append(layoutName.charAt(processed));
+                            processed++;
+                        }
+                        g.drawString(sb.toString(), annotationX, annotationY);
+                        annotationY += fontHeight;
+                    }
+                }
+                else{
+                    g.drawString(layoutName, annotationX, annotationY);
+                }
             }
         }
     }
@@ -448,7 +487,7 @@ class CheckBoxListener extends MouseInputAdapter {
 
             // enter resizing mode for the appropriate corner
             debuggingLens.setIsResizing(debuggingLens.mouseIsOnCorner());
-            // set the anchor point for the lens to rubberband around
+            // set the anchor point for the lens to rubber band around
             debuggingLens.setResizingAnchorPoint(debuggingLens.mouseIsOnCorner());
 
             redispatchMouseEvent(e, true);
