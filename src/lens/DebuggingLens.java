@@ -192,25 +192,6 @@ public class DebuggingLens extends JComponent implements ItemListener {
             height = Math.abs(resizingAnchorPoint.y - mouseLocation.y);
         }
 
-        // set the cursor to the appropriate corner if resizing
-        switch (isResizing) {
-            case TOP_LEFT:
-                setCursor(new Cursor(Cursor.NW_RESIZE_CURSOR));
-                break;
-            case TOP_RIGHT:
-                setCursor(new Cursor(Cursor.NE_RESIZE_CURSOR));
-                break;
-            case BOTTOM_LEFT:
-                setCursor(new Cursor(Cursor.SW_RESIZE_CURSOR));
-                break;
-            case BOTTOM_RIGHT:
-                setCursor(new Cursor(Cursor.SE_RESIZE_CURSOR));
-                break;
-            default:
-                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-                break;
-        }
-
         // set clipping rectangle for lens (will not draw anything outside of the lens bounds)
         g.setClip(xMin, yMin, width + 1, height + 1);
 
@@ -243,24 +224,20 @@ public class DebuggingLens extends JComponent implements ItemListener {
             if(topLeftPoint.x - 5 <= mouseX && mouseX <= topLeftPoint.x + 5){
                 // top left
                 if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
-                    setCursor(new Cursor(Cursor.NW_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5, 10, 10);
                 }
                 else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
                     // bottom left
-                    setCursor(new Cursor(Cursor.SW_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5, topLeftPoint.y - 5 + height, 10, 10);
                 }
             }
             else if(topLeftPoint.x - 5  + width <= mouseX && mouseX <= topLeftPoint.x + 5 + width){
                 if(topLeftPoint.y - 5 <= mouseY && mouseY <= topLeftPoint.y + 5){
                     // top right
-                    setCursor(new Cursor(Cursor.NE_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5, 10, 10);
                 }
                 else if(topLeftPoint.y - 5 + height <= mouseY && mouseY <= topLeftPoint.y + 5 + height){
                     // bottom right
-                    setCursor(new Cursor(Cursor.SE_RESIZE_CURSOR));
                     g.fillOval(topLeftPoint.x - 5 + width, topLeftPoint.y - 5 + height, 10, 10);
                 }
             }

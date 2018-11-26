@@ -23,14 +23,10 @@ public class GlassPaneDemo {
         JPanel panel = new JPanel();
         panel.setLayout(new FlowLayout());
 
-        contentPane.add(Box.createVerticalStrut(50));
-
         panel.add(new JButton("Button 1"));
         panel.add(new JButton("Button 2"));
         panel.add(new JButton("Button 3"));
         contentPane.add(panel);
-
-        contentPane.add(Box.createVerticalStrut(50));
 
         JRadioButton firstButton = new JRadioButton("Option 1");
         firstButton.setSelected(true);
@@ -41,11 +37,7 @@ public class GlassPaneDemo {
         contentPane.add(firstButton);
         contentPane.add(secondButton);
 
-        contentPane.add(Box.createVerticalStrut(50));
-
         contentPane.add(new JComboBox<>(new String[]{"Combo 1", "Combo 2", "Combo 3", "Combo 4"}));
-
-        contentPane.add(Box.createVerticalStrut(50));
 
         contentPane.add(new JLabel("This is a label"));
 
